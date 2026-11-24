@@ -4,9 +4,80 @@ import { gzipSync } from "node:zlib";
 import { parseCatalog, type Icon } from "../src/lib/catalog";
 import { searchIcons } from "../src/lib/search";
 import { luaString, makeMacroCommand } from "../src/lib/macro";
+import {
+  buildCategoryTree,
+  countHierarchy,
+  createBrowseGroups,
+  curatedGroups,
+  withinGroup,
+} from "../src/lib/groups";
 
 const raw = JSON.parse(readFileSync("public/data/catalog.json", "utf8"));
 const catalog = parseCatalog(raw);
+
+describe("semantic browse hierarchy", () => {
+  test("builds intermediate levels and matches only complete path segments", () => {
+    const tree = buildCategoryTree([
+      {
+        id: "General/Achievements/Dungeons/Raids",
+        category: "General",
+        label: "Raids",
+      },
+    ]);
+    expect(tree[0].children[0].label).toBe("Achievements");
+    expect(tree[0].children[0].children[0].children[0].id).toBe(
+      "General/Achievements/Dungeons/Raids",
+    );
+    expect(
+      withinGroup("General/Achievements/Dungeons", "General/Achievements"),
+    ).toBe(true);
+    expect(
+      withinGroup("General/AchievementsExtra", "General/Achievements"),
+    ).toBe(false);
+  });
+  test("preserves all icon associations and standalone class/profession identities", () => {
+    const browse = createBrowseGroups(catalog);
+    for (const group of catalog.groups) {
+      expect(browse.paths.has(group.id)).toBe(true);
+      if (group.category === "Classes" || group.category === "Professions")
+        expect(browse.paths.get(group.id)).toBe(group.id);
+    }
+    expect(browse.paths.get("Professions/Mining")).toBe("Professions/Mining");
+    const counts = countHierarchy(catalog.icons, browse.ancestry);
+    expect(counts.get("Classes")).toBe(1395);
+    expect(counts.get("General")).toBe(28925);
+    expect(counts.get("Professions")).toBe(2873);
+    expect(browse.groups.length).toBeLessThan(catalog.groups.length / 2);
+  });
+  test("semantic themes join related small folders without changing source metadata", () => {
+    const browse = createBrowseGroups(catalog);
+    const admiral = catalog.icons.find((icon) =>
+      icon.groups.includes("General/Achievements/Admiral"),
+    )!;
+    expect(admiral.groups).toContain("General/Achievements/Admiral");
+    expect(browse.paths.get("General/Achievements/Admiral")).not.toBe(
+      "General/Achievements",
+    );
+    expect(
+      Object.keys(curatedGroups).every((path) =>
+        catalog.groups.some((group) => group.id === path),
+      ),
+    ).toBe(true);
+  });
+  test("parent counters deduplicate icons belonging to several descendant folders", () => {
+    const fixture = { ...catalog.icons[0], groups: ["source/a", "source/b"] };
+    const counts = countHierarchy(
+      [fixture],
+      new Map([
+        ["source/a", ["General", "General/World", "General/World/A"]],
+        ["source/b", ["General", "General/World", "General/World/B"]],
+      ]),
+    );
+    expect(counts.get("General/World")).toBe(1);
+    expect(counts.get("General/World/A")).toBe(1);
+    expect(counts.get("General/World/B")).toBe(1);
+  });
+});
 
 describe("full upstream import", () => {
   test("every source record remains represented in its exact original group", () => {
