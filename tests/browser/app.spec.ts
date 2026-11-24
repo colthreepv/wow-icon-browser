@@ -1,8 +1,10 @@
 import { test, expect } from "@playwright/test";
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { makeMacroCommand } from "../../src/lib/macro";
 
 const manifest = JSON.parse(readFileSync("public/data/catalog.json", "utf8"));
+const artifacts = process.env.ARTIFACT_DIR ?? "docs";
+mkdirSync(artifacts, { recursive: true });
 const search = (page: import("@playwright/test").Page) =>
   page.getByRole("searchbox");
 const tiles = (page: import("@playwright/test").Page) =>
@@ -33,7 +35,10 @@ test("desktop: complete virtualized catalog, real search, escaped clipboard, sav
       transfer: (e as PerformanceResourceTiming).transferSize,
     })),
   );
-  await page.screenshot({ path: "docs/desktop.png", animations: "disabled" });
+  await page.screenshot({
+    path: `${artifacts}/desktop.png`,
+    animations: "disabled",
+  });
 
   const grid = page.getByTestId("icon-grid");
   await grid.evaluate((el) => {
@@ -71,7 +76,7 @@ test("desktop: complete virtualized catalog, real search, escaped clipboard, sav
   );
   await expect(page.getByText(/copied/i).first()).toBeVisible();
   await page.screenshot({
-    path: "docs/desktop-detail.png",
+    path: `${artifacts}/desktop-detail.png`,
     animations: "disabled",
   });
   await page
@@ -142,7 +147,7 @@ test("desktop: complete virtualized catalog, real search, escaped clipboard, sav
     note: "Decoded image estimate is width × height × 4 for distinct initial atlas resources, excluding browser/GPU cache overhead. Encoded bytes use browser Resource Timing and account for server content encoding.",
   };
   writeFileSync(
-    `docs/browser-${manifest.atlases[0].count}.json`,
+    `${artifacts}/browser-${manifest.atlases[0].count}.json`,
     JSON.stringify(report, null, 2),
   );
 });
@@ -153,7 +158,10 @@ test("mobile: searchable catalog and usable icon drawer without horizontal overf
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("./?q=eagle+eye");
   await expect(tiles(page)).toHaveCount(1);
-  await page.screenshot({ path: "docs/mobile.png", animations: "disabled" });
+  await page.screenshot({
+    path: `${artifacts}/mobile.png`,
+    animations: "disabled",
+  });
   await tiles(page).first().click();
   await expect(page.getByLabel(/macro name/i)).toBeVisible();
   expect(
@@ -162,7 +170,7 @@ test("mobile: searchable catalog and usable icon drawer without horizontal overf
     ),
   ).toBe(true);
   await page.screenshot({
-    path: "docs/mobile-detail.png",
+    path: `${artifacts}/mobile-detail.png`,
     animations: "disabled",
   });
   await page.getByRole("button", { name: "Close detail", exact: true }).click();
@@ -221,7 +229,7 @@ test("1200px: filters, zoom and keyboard work together; scrolling and sparse sea
   );
   const uniqueFiles = new Set(resources.map((r) => r.file));
   writeFileSync(
-    `docs/workload-${manifest.atlases[0].count}.json`,
+    `${artifacts}/workload-${manifest.atlases[0].count}.json`,
     JSON.stringify(
       {
         viewport: "1200x900",
@@ -320,4 +328,30 @@ test("missing images and disabled storage keep the selection flow usable", async
   ).toHaveValue(
     makeMacroCommand("UI", "Interface\\Icons\\ability_hunter_eagleeye"),
   );
+});
+
+test("keyboard focus survives inspector dismissal, grid resize and scrolling", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto("./");
+  await expect(tiles(page).first()).toBeVisible();
+  const tile = page.locator('[data-icon-id="7"]');
+  await tile.click();
+  await page.getByLabel(/macro name/i).focus();
+  await page.keyboard.press("Escape");
+  await expect(tile).toBeFocused();
+  await tile.click();
+  await page.setViewportSize({ width: 830, height: 900 });
+  await expect(tile).toBeFocused();
+  await page.getByTestId("icon-grid").evaluate((el) => {
+    el.scrollTop = el.scrollHeight;
+  });
+  await expect(page.getByTestId("icon-grid")).toBeFocused();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(
+    page.getByRole("dialog", { name: "icon detail", exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close detail", exact: true }).click();
+  await expect(page.getByTestId("icon-grid")).toBeFocused();
 });

@@ -2,10 +2,12 @@ import {
   useCallback,
   useDeferredValue,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type KeyboardEvent,
+  type ButtonHTMLAttributes,
   type ReactNode,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -228,6 +230,22 @@ function CopyField({
   );
 }
 
+function FocusTile({
+  onFocusLost,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { onFocusLost: () => void }) {
+  const button = useRef<HTMLButtonElement>(null);
+  const fallback = useRef(onFocusLost);
+  fallback.current = onFocusLost;
+  useLayoutEffect(
+    () => () => {
+      if (button.current === document.activeElement) fallback.current();
+    },
+    [],
+  );
+  return <button ref={button} {...props} />;
+}
+
 type Section = { id: string; label: string; category: string; icons: Icon[] };
 type Row =
   | { type: "heading"; section: Section }
@@ -250,13 +268,18 @@ function IconGrid({
   resetKey: string;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
+  const pendingFocus = useRef<number | null>(null);
   const [width, setWidth] = useState(700);
   const [active, setActive] = useState("");
   useEffect(() => {
     const el = scroller.current!;
-    const observer = new ResizeObserver(([entry]) =>
-      setWidth(entry.contentRect.width),
-    );
+    const observer = new ResizeObserver(([entry]) => {
+      const focused = document.activeElement as HTMLElement | null;
+      const id = focused?.dataset.iconId;
+      pendingFocus.current =
+        focused && el.contains(focused) && id ? Number(id) : null;
+      setWidth(entry.contentRect.width);
+    });
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
@@ -287,6 +310,22 @@ function IconGrid({
     estimateSize: (index) => (rows[index]?.type === "heading" ? 46 : rowHeight),
     overscan: 3,
   });
+  useLayoutEffect(() => {
+    const id = pendingFocus.current;
+    if (id === null) return;
+    pendingFocus.current = null;
+    const row = rowById.get(id);
+    if (row === undefined) return;
+    virtual.scrollToIndex(row, { align: "auto" });
+    const frame = requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        scroller.current
+          ?.querySelector<HTMLButtonElement>(`[data-icon-id="${id}"]`)
+          ?.focus({ preventScroll: true }),
+      ),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [columns, rowById, virtual]);
   useEffect(() => {
     virtual.measure();
   }, [rowHeight, columns, virtual]);
@@ -357,6 +396,15 @@ function IconGrid({
       aria-label="Icon results"
       tabIndex={0}
       onKeyDown={navigate}
+      onScrollCapture={() => {
+        const el = scroller.current;
+        const focused = document.activeElement as HTMLElement | null;
+        if (!el || !focused?.dataset.iconId || !el.contains(focused)) return;
+        const tile = focused.getBoundingClientRect();
+        const viewport = el.getBoundingClientRect();
+        if (tile.bottom < viewport.top || tile.top > viewport.bottom)
+          el.focus({ preventScroll: true });
+      }}
     >
       <div style={{ height: virtual.getTotalSize(), position: "relative" }}>
         {virtual.getVirtualItems().map((item) => {
@@ -389,8 +437,11 @@ function IconGrid({
                   }}
                 >
                   {row.icons.map((icon, i) => (
-                    <button
+                    <FocusTile
                       key={icon.id}
+                      onFocusLost={() =>
+                        scroller.current?.focus({ preventScroll: true })
+                      }
                       data-testid="icon-tile"
                       data-icon-id={icon.id}
                       data-flat={row.start + i}
@@ -414,7 +465,7 @@ function IconGrid({
                         size={size}
                       />
                       {names && <span className="tile-name">{icon.name}</span>}
-                    </button>
+                    </FocusTile>
                   ))}
                 </div>
               )}
@@ -600,7 +651,19 @@ function Browser({ catalog }: { catalog: Catalog }) {
     () => catalog.icons.find((i) => i.name === route.icon) ?? null,
     [catalog, route.icon],
   );
-  const closeDetail = useCallback(() => update({ icon: "" }), [update]);
+  const closeDetail = useCallback(() => {
+    const id = selected?.id;
+    update({ icon: "" });
+    requestAnimationFrame(() => {
+      const tile =
+        id === undefined
+          ? null
+          : document.querySelector<HTMLButtonElement>(`[data-icon-id="${id}"]`);
+      (
+        tile ?? document.querySelector<HTMLElement>('[data-testid="icon-grid"]')
+      )?.focus({ preventScroll: true });
+    });
+  }, [update, selected]);
   useEffect(() => {
     const listener = (event: globalThis.KeyboardEvent) => {
       const target = event.target as HTMLElement;

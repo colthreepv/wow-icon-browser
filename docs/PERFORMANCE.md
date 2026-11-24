@@ -7,7 +7,7 @@ this document.
 
 ## Shipped assets
 
-- JavaScript: 284.38 KB raw, 88.92 KB gzip.
+- JavaScript: 285.51 KB raw, 89.20 KB gzip.
 - CSS: 15.69 KB raw, 4.17 KB gzip.
 - Complete metadata, including usage names: 1,760,951 bytes raw; the browser
   observed about 308 KB encoded over HTTP.
