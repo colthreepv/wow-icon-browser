@@ -1,0 +1,19 @@
+{
+  "viewport": "1200x900",
+  "atlasSize": 64,
+  "workload": "Initial viewport, Hunter filter/keyboard, 24 frames of 1500px scrolling, then six real search queries",
+  "queries": [
+    "eagle eye",
+    "fire",
+    "frost bolt",
+    "gem",
+    "inv",
+    "sword"
+  ],
+  "p95FrameMs": 18.09999999962747,
+  "maxFrameMs": 19.699999999254942,
+  "uniqueAtlasRequests": 55,
+  "imageEncodedBytes": 5028092,
+  "requestedAtlasDecodedRgbaEstimateBytes": 44154880,
+  "note": "Cumulative requested-image estimate, not simultaneous residency. Resource Timing encoded bytes; cache and GPU overhead excluded."
+}

@@ -1,0 +1,13 @@
+{
+  "viewport": "1920x1080",
+  "catalogEntries": 33193,
+  "mountedInitial": 211,
+  "atlasSize": 64,
+  "initialImageRequests": 4,
+  "initialImageEncodedBytes": 290616,
+  "initialImageDecodedRgbaEstimateBytes": 3211264,
+  "metadataEncodedBytes": 311924,
+  "initialResourcesEncodedBytes": 694662,
+  "privacy": "Only same-origin requests observed",
+  "note": "Decoded image estimate is width × height × 4 for distinct initial atlas resources, excluding browser/GPU cache overhead. Encoded bytes use browser Resource Timing and account for server content encoding."
+}
