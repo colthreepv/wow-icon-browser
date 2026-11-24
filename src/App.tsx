@@ -911,14 +911,31 @@ function Browser({ catalog }: { catalog: Catalog }) {
           <CopyField
             label="EditMacro command"
             action="Copy command"
-            value={makeMacroCommand(macroName, selected.texturePath)}
-            disabled={!macroName.trim()}
+            value={
+              selected.fileDataId === null
+                ? "No unambiguous FileDataID mapping found."
+                : makeMacroCommand(macroName, selected.fileDataId)
+            }
+            disabled={!macroName.trim() || selected.fileDataId === null}
             onCopy={recordCopy}
           />
           <p className="field-hint">
-            Paste and run in-game to update that macro’s icon.
+            {selected.fileDataId === null
+              ? "Command copying is unavailable for this icon until its ID can be mapped."
+              : "Uses a numeric FileDataID. Paste and run in-game to update that macro’s icon."}
           </p>
         </section>
+        <CopyField
+          label="FileDataID"
+          action="Copy FileDataID"
+          value={
+            selected.fileDataId === null
+              ? "Not mapped"
+              : String(selected.fileDataId)
+          }
+          disabled={selected.fileDataId === null}
+          onCopy={recordCopy}
+        />
         <CopyField
           label="Filename"
           action="Copy filename"
@@ -964,8 +981,9 @@ function Browser({ catalog }: { catalog: Catalog }) {
           </p>
         </section>
         <p className="compatibility-note">
-          Mixed WoW catalog, including Retail. Preview and usage data do not
-          verify availability in your Forever client.
+          Mixed WoW catalog, including Retail. A community-listfile ID does not
+          verify availability in your Forever client. Texture paths are kept as
+          references and may not resolve there.
         </p>
       </div>
     </>

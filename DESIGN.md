@@ -39,7 +39,12 @@ query and collection. An inspected icon may remain visible after filtering it
 out of the results, with an explicit context label.
 
 Copy feedback stays beside the action. Clipboard failure selects the text and
-explains manual copying. Missing images retain an identifiable placeholder;
+explains manual copying. The macro command uses a numeric community-listfile
+FileDataID and preserves both existing macro-name arguments. FileDataID has a
+separate copy action. Missing or ambiguous IDs disable command copying and are
+never silently replaced by a texture path; paths remain reference data. Mapped
+IDs are not labelled as verified client availability.
+Missing images retain an identifiable placeholder;
 blocked storage keeps the current session usable and displays a notice.
 
 All icons and atlases derive from the pinned upstream snapshot documented in

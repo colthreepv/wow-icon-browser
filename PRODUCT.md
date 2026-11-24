@@ -30,6 +30,7 @@ Search the complete icon catalog, browse visually, select an icon, and copy an e
 - Small on-demand lossy WebP atlases allowed; compare images and atlas sizes before selecting defaults.
 - Upstream source snapshot: ZHamburglar/wow-forever-icons-and-macros at 207c135a931044deb51808f7a65c2aa0ec1c1be2. 33193 JPG files, 60676471 bytes. Imported catalog includes Retail content, not verified for Forever.
 - No FileDataIDs without a verified mapping. Source collection has no explicit license; review redistribution and distinguish third-party image rights from our code license.
+- The player reports name-based texture paths fail in the current Forever client. Prefer numeric FileDataIDs from the pinned wowdev/wow-listfile snapshot; never silently fall back to a texture-path command. Copy FileDataID is available. Listfile matching and client availability are distinct; missing or ambiguous IDs disable command copying.
 
 ## Brand Commitments
 

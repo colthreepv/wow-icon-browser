@@ -40,7 +40,7 @@ be cleared by removing this site's browser storage.
 - Persistent favorites, recent selections, macro name and display preferences.
 - Shareable search, filters and selected icon through URL parameters.
 - Docked inspector on desktop and icon drawer on mobile.
-- Copies original JPG filename, derived texture path or an `EditMacro` command.
+- Copies FileDataID, original JPG filename, reference texture path or an `EditMacro` command using a numeric FileDataID.
 - Searches verified associated item/spell names where usage data exists.
 
 Keyboard: `/` focuses search, arrow keys navigate the grid, `Escape` closes the
@@ -59,7 +59,7 @@ its 15 icons. Larger related achievement folders also join the same theme so
 The command deliberately passes the existing macro name twice:
 
 ```lua
-/run EditMacro("UI","UI","Interface\\Icons\\ability_hunter_eagleeye")
+/run EditMacro("UI","UI",132172)
 ```
 
 Quotes, backslashes and control characters in macro names are escaped as Lua
@@ -77,10 +77,18 @@ their separate searchable filenames. The snapshot has no duplicate filenames,
 case-folded name collisions or same-name/different-content collisions.
 
 This is a mixed WoW catalog, including Retail classes and artwork. It is **not a
-Forever compatibility list**. Texture paths follow the `Interface\\Icons\\`
-filename convention and are not verified against client files. No FileDataIDs
-are invented. Actual texture availability and the final in-game command behavior
-must be verified in the target Forever client.
+Forever compatibility list**. Commands now use numeric FileDataIDs from
+[wowdev/wow-listfile](https://github.com/wowdev/wow-listfile/blob/70a4e328f80069db2a3be88925e626ffad07ef4b/parts/interface.csv),
+commit `70a4e328f80069db2a3be88925e626ffad07ef4b`. All 33,193 icon names have an
+unambiguous mapping in that snapshot. Matching normalizes case, slash direction
+and known texture extensions; `.meta` files are excluded. No IDs are guessed.
+
+FileDataIDs identify files and are generally stable; a file can still be absent,
+replaced or updated in a particular client build. Community filenames may be
+revised and are not all official/verified names. A listfile match is **not a
+Forever availability check**. Actual texture availability and in-game command
+behavior need verification in that client. Texture paths remain reference data:
+they are no longer used as a command fallback when no ID can be mapped.
 
 `Used by` is a **partial enrichment**, currently 4,461 item/spell associations on
 28 icons, prioritizing Hunter-related and commonly used images. These names are
@@ -102,6 +110,7 @@ redistribution permission. This is an unofficial fan utility.
 bun run benchmark:images
 bun run import:usage
 bun run import:catalog
+bun run import:filedataids
 ```
 
 The import downloads the pinned archive into ignored `.cache/`, verifies the
@@ -119,6 +128,12 @@ embedded JSON is parsed without `eval`, and item/spell associations are validate
 against the exact upstream icon field. A second run reuses cached pages unless
 `--refresh` is supplied. To merge a refreshed usage snapshot without re-encoding
 images, run `bun scripts/merge-usage.ts`.
+
+`bun run import:filedataids` caches the pinned interface CSV by revision,
+validates exact normalized matches, records conflicts and merges numeric IDs
+into compact catalog tuples. Rebuilding the icon catalog reuses the imported
+ID snapshot automatically; refreshing IDs does not require re-encoding images.
+The browser loads the merged manifest, not the full CSV or its separate report.
 
 ## Performance and verification
 
@@ -147,7 +162,7 @@ metadata, DOM and frame measurements are documented in
 
 ```sh
 # Full source is cached after import; completeness tests compare with its index.
-bun test tests/core.test.ts
+bun run test
 bunx playwright install chromium
 bun run build
 bun run test:browser

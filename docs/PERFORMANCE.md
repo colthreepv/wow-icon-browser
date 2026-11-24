@@ -7,10 +7,11 @@ this document.
 
 ## Shipped assets
 
-- JavaScript after the semantic-navigation update: 311.27 KB raw, 93.90 KB gzip.
+- JavaScript after semantic navigation and numeric IDs: 312.94 KB raw, 94.42 KB gzip.
 - CSS after the navigation update: 16.10 KB raw, 4.30 KB gzip.
-- Complete metadata, including usage names: 1,760,951 bytes raw; the browser
-  observed about 308 KB encoded over HTTP.
+- Complete metadata, including usage names and FileDataIDs: 2,014,187 bytes raw,
+  437,493 bytes gzip. The numeric-ID tuple adds about 127 KB gzip to the earlier
+  metadata snapshot. It avoids loading the full 11.47 MB source CSV at runtime.
 - All 33,193 icon identities are searchable. 32,476 distinct source images are
   packed into 127 WebP atlases, quality 78, 16×16 cells at native 56px.
 - Entire generated image collection: 34,400,022 bytes, about 43.3% smaller than

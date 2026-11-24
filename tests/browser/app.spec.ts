@@ -79,10 +79,7 @@ test("desktop: complete virtualized catalog, real search, escaped clipboard, sav
   ).toBeVisible();
   const macroName = 'Raid "UI"\\Hunter';
   await page.getByLabel(/macro name/i).fill(macroName);
-  const expected = makeMacroCommand(
-    macroName,
-    "Interface\\Icons\\ability_hunter_eagleeye",
-  );
+  const expected = makeMacroCommand(macroName, 132172);
   await page
     .getByRole("button", { name: /copy.*(?:editmacro|command)/i })
     .click();
@@ -94,6 +91,15 @@ test("desktop: complete virtualized catalog, real search, escaped clipboard, sav
     path: `${artifacts}/desktop-detail.png`,
     animations: "disabled",
   });
+  await expect(page.getByLabel("FileDataID", { exact: true })).toHaveValue(
+    "132172",
+  );
+  await page
+    .getByRole("button", { name: "Copy FileDataID", exact: true })
+    .click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(
+    "132172",
+  );
   await page
     .getByRole("button", { name: "Add to favorites", exact: true })
     .click();
@@ -340,9 +346,7 @@ test("missing images and disabled storage keep the selection flow usable", async
   await page.getByLabel(/macro name/i).fill("UI");
   await expect(
     page.getByLabel("EditMacro command", { exact: true }),
-  ).toHaveValue(
-    makeMacroCommand("UI", "Interface\\Icons\\ability_hunter_eagleeye"),
-  );
+  ).toHaveValue(makeMacroCommand("UI", 132172));
 });
 
 test("keyboard focus survives inspector dismissal, grid resize and scrolling", async ({
@@ -369,4 +373,31 @@ test("keyboard focus survives inspector dismissal, grid resize and scrolling", a
   ).toBeVisible();
   await page.getByRole("button", { name: "Close detail", exact: true }).click();
   await expect(page.getByTestId("icon-grid")).toBeFocused();
+});
+
+test("an unmapped ID disables command copying instead of silently using a texture path", async ({
+  page,
+}) => {
+  const fixture = structuredClone(manifest);
+  fixture.icons.find(
+    (row: unknown[]) => row[0] === "ability_hunter_eagleeye",
+  )[4] = null;
+  fixture.fileDataIdStats.matched--;
+  fixture.fileDataIdStats.unmatched++;
+  await page.route("**/data/catalog.json", (route) =>
+    route.fulfill({ json: fixture }),
+  );
+  await page.goto("./?q=eagle+eye");
+  await expect(tiles(page)).toHaveCount(1);
+  await tiles(page).first().click();
+  await page.getByLabel(/macro name/i).fill("UI");
+  await expect(
+    page.getByRole("button", { name: "Copy command", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Copy FileDataID", exact: true }),
+  ).toBeDisabled();
+  await expect(
+    page.getByLabel("EditMacro command", { exact: true }),
+  ).toHaveValue("No unambiguous FileDataID mapping found.");
 });
