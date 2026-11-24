@@ -1,0 +1,35 @@
+{
+  "source": {
+    "repository": "ZHamburglar/wow-forever-icons-and-macros",
+    "revision": "207c135a931044deb51808f7a65c2aa0ec1c1be2",
+    "archive": "https://codeload.github.com/ZHamburglar/wow-forever-icons-and-macros/tar.gz/207c135a931044deb51808f7a65c2aa0ec1c1be2"
+  },
+  "files": 33193,
+  "originalBytes": 60676471,
+  "uniqueNames": 33193,
+  "uniqueImages": 32476,
+  "duplicateFilenames": [],
+  "sameNameContentCollisions": [],
+  "caseCollisions": [],
+  "originalDimensions": {
+    "56x56": 32465,
+    "56x28": 5,
+    "28x56": 6
+  },
+  "atlas": {
+    "format": "lossy WebP",
+    "quality": 78,
+    "columns": 16,
+    "perAtlas": 256,
+    "cellSize": 56,
+    "count": 127,
+    "bytes": 34400022,
+    "decodedRgbaBytes": 407429120
+  },
+  "metadataBytes": 1760951,
+  "usageCoverage": {
+    "icons": 28,
+    "relations": 4461,
+    "scope": "Partial build-time snapshot drawn from the first 1,000 of 30,411 gallery icons, 28 native icon detail pages, and 11 attempted broad list pages. None of the 11 attempted broad class or global spell/item list pages returned usable native HTML. Selection prioritizes Hunter icon names, then spell-bearing and high-usage icons. Only exact item/spell IDs whose Wowhead icon field matches the page icon are included. The snapshot is cached locally and creates no runtime external traffic. This local snapshot requires a redistribution rights review before publishing. Terms relevant to publishing include https://corp.fanbyte.com/legal/terms section 4."
+  }
+}

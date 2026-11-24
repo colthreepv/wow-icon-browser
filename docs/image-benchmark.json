@@ -34,5 +34,5 @@
       "singleScatteredResultDecodeBytes": 3211264
     }
   ],
-  "decision": "64-icon atlases balance grouped browsing request count with less overfetch/decoded memory for scattered search and favorites than 256-icon atlases. Browser measurements reported separately."
+  "decision": "256-icon atlases are the desktop candidate: almost identical compressed total for 256 icons and four times fewer requests. Compare real initial/scroll/scattered-search workloads before finalizing; smaller atlases reduce overfetch for sparse results. Decoded memory is a secondary constraint, not a reason by itself."
 }
