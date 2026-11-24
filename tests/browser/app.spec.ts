@@ -23,6 +23,21 @@ test("desktop: complete virtualized catalog, real search, escaped clipboard, sav
   await page.goto("./");
   await expect(tiles(page).first()).toBeVisible();
   await expect(page.getByTestId("result-count")).toContainText(/33[,.\s]?193/);
+  await expect
+    .poll(() =>
+      tiles(page)
+        .locator("img")
+        .evaluateAll(
+          (images) =>
+            images.length > 0 &&
+            images.every(
+              (image) =>
+                (image as HTMLImageElement).complete &&
+                (image as HTMLImageElement).naturalWidth > 0,
+            ),
+        ),
+    )
+    .toBe(true);
   const mountedInitial = await tiles(page).count();
   expect(mountedInitial).toBeLessThan(1000);
   expect(requests.filter((u) => u.includes("/atlases/")).length).toBeLessThan(
