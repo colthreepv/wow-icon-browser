@@ -118,6 +118,21 @@ describe("full upstream import", () => {
     broken.icons[0][2] = 999999;
     expect(() => parseCatalog(broken)).toThrow();
   });
+  test("ID coverage and source provenance agree with all catalog records", () => {
+    expect(catalog.fileDataIdCoverage.matched).toBe(33193);
+    expect(catalog.fileDataIdCoverage.source?.revision).toBe(
+      "70a4e328f80069db2a3be88925e626ffad07ef4b",
+    );
+    expect(
+      catalog.icons.find((icon) => icon.name === "ability_hunter_eagleeye")!
+        .fileDataId,
+    ).toBe(132172);
+    const broken = structuredClone(raw);
+    broken.icons[0][4] = 0;
+    expect(() => parseCatalog(broken)).toThrow("Invalid FileDataID");
+    broken.icons[0][4] = null;
+    expect(() => parseCatalog(broken)).toThrow("Invalid FileDataID coverage");
+  });
 });
 
 describe("user search behavior", () => {
@@ -140,6 +155,7 @@ describe("user search behavior", () => {
       name,
       filename: `${name}.jpg`,
       texturePath: `Interface\\Icons\\${name}`,
+      fileDataId: null,
       groups: ["General/Spells"],
       atlas: 0,
       cell: 0,
@@ -189,6 +205,13 @@ describe("user search behavior", () => {
 });
 
 describe("Lua command output", () => {
+  test("uses a numeric FileDataID without quoting it and rejects invalid IDs", () => {
+    expect(makeMacroCommand("UI", 132172)).toBe(
+      '/run EditMacro("UI","UI",132172)',
+    );
+    for (const id of [0, -1, 1.5, NaN, Infinity, 4294967296])
+      expect(() => makeMacroCommand("UI", id)).toThrow();
+  });
   test("explicitly preserves both macro name arguments and the escaped texture path", () => {
     expect(
       makeMacroCommand("UI", "Interface\\Icons\\Ability_Hunter_EagleEye"),

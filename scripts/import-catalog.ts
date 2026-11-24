@@ -233,3 +233,13 @@ console.log(
     2,
   ),
 );
+
+// Reuse the separately pinned ID snapshot when rebuilding image assets.
+if (await Bun.file(join(output, "data/filedataids.json")).exists()) {
+  const merge = Bun.spawn(
+    [process.execPath, resolve("scripts/merge-filedataids.ts")],
+    { stdout: "inherit", stderr: "inherit" },
+  );
+  if ((await merge.exited) !== 0)
+    throw new Error("FileDataID merge failed after import");
+}

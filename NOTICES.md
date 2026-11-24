@@ -50,4 +50,16 @@ device. GitHub Pages itself receives ordinary hosting requests.
 The source includes Retail classes and content. Web previews and Wowhead usage
 records do not certify that a texture exists in a particular Forever client.
 Texture paths are derived from original names with the `Interface\\Icons\\`
-convention, not verified game-file mappings. No FileDataIDs are inferred.
+convention, not verified game-file mappings. Numeric FileDataIDs are now imported
+from `wowdev/wow-listfile`, `parts/interface.csv` at commit
+`70a4e328f80069db2a3be88925e626ffad07ef4b`. CSV SHA-256:
+`f773eccb69f284d2f2597775a55667c43cb1fb616e586ce9912131b170d7d994`.
+
+Source: https://github.com/wowdev/wow-listfile
+
+The source repository has no explicit license identified by GitHub. Its data is
+attributed here and is not relicensed under this project's MIT code license.
+The community listfile warns that some filenames are inferred and can change.
+A unique normalized filename-to-ID match establishes what the listfile says;
+it does not certify availability or appearance in a specific Forever build.
+Metadata `.meta` file IDs are excluded. No numeric IDs are invented.

@@ -4,6 +4,7 @@ export type Icon = {
   name: string;
   filename: string;
   texturePath: string;
+  fileDataId: number | null;
   groups: string[];
   atlas: number;
   cell: number;
@@ -30,11 +31,26 @@ export type Catalog = {
     originalBytes: number;
   };
   usageCoverage: { icons: number; relations: number; scope: string };
+  fileDataIdCoverage: {
+    matched: number;
+    unmatched: number;
+    ambiguous: number;
+    source: {
+      repository: string;
+      revision: string;
+      file: string;
+      sha256: string;
+      normalization: string;
+    } | null;
+  };
 };
 export const assetUrl = (file: string) => `${import.meta.env.BASE_URL}${file}`;
 
 export async function loadCatalog(signal?: AbortSignal): Promise<Catalog> {
-  const response = await fetch(assetUrl("data/catalog.json"), { signal });
+  const response = await fetch(assetUrl("data/catalog.json"), {
+    signal,
+    cache: "no-cache",
+  });
   if (!response.ok)
     throw new Error("The icon catalog could not be loaded. Please retry.");
   const raw: unknown = await response.json();
@@ -47,7 +63,7 @@ function record(value: unknown): value is Record<string, unknown> {
 export function parseCatalog(raw: unknown): Catalog {
   if (
     !record(raw) ||
-    raw.version !== 1 ||
+    (raw.version !== 1 && raw.version !== 2) ||
     !Array.isArray(raw.groups) ||
     !Array.isArray(raw.icons) ||
     !Array.isArray(raw.atlases) ||
@@ -94,9 +110,18 @@ export function parseCatalog(raw: unknown): Catalog {
     throw new Error("Invalid catalog source");
   const usageMap = raw.usage;
   const icons: Icon[] = raw.icons.map((value, id) => {
-    if (!Array.isArray(value) || value.length !== 4)
+    if (!Array.isArray(value) || value.length !== (raw.version === 2 ? 5 : 4))
       throw new Error("Invalid icon record");
     const [name, memberships, atlas, cell] = value;
+    const fileDataId: unknown = raw.version === 2 ? value[4] : null;
+    if (
+      fileDataId !== null &&
+      (typeof fileDataId !== "number" ||
+        !Number.isSafeInteger(fileDataId) ||
+        fileDataId <= 0 ||
+        fileDataId > 0xffffffff)
+    )
+      throw new Error("Invalid FileDataID");
     if (
       typeof name !== "string" ||
       !name.length ||
@@ -133,6 +158,7 @@ export function parseCatalog(raw: unknown): Catalog {
       name,
       filename: `${name}.jpg`,
       texturePath: `Interface\\Icons\\${name}`,
+      fileDataId: fileDataId as number | null,
       groups: memberships.map((g) => groups[g].id),
       atlas,
       cell,
@@ -151,11 +177,54 @@ export function parseCatalog(raw: unknown): Catalog {
     typeof coverage.scope !== "string"
   )
     throw new Error("Invalid usage coverage");
+  let fileDataIdCoverage: Catalog["fileDataIdCoverage"] = {
+    matched: 0,
+    unmatched: icons.length,
+    ambiguous: 0,
+    source: null,
+  };
+  if (raw.version === 2) {
+    const ids = raw.fileDataIdStats;
+    const origin = raw.fileDataIdSource;
+    if (
+      !record(ids) ||
+      !["matched", "unmatched", "ambiguous", "total"].every(
+        (key) =>
+          typeof ids[key] === "number" &&
+          Number.isSafeInteger(ids[key]) &&
+          Number(ids[key]) >= 0,
+      ) ||
+      ids.total !== icons.length ||
+      Number(ids.matched) + Number(ids.unmatched) + Number(ids.ambiguous) !==
+        icons.length ||
+      ids.matched !== icons.filter((icon) => icon.fileDataId !== null).length
+    )
+      throw new Error("Invalid FileDataID coverage");
+    if (
+      origin !== null &&
+      (!record(origin) ||
+        !["repository", "revision", "file", "sha256", "normalization"].every(
+          (key) => typeof origin[key] === "string",
+        ) ||
+        !/^[a-f0-9]{40}$/.test(String(origin.revision)) ||
+        !/^[a-f0-9]{64}$/.test(String(origin.sha256)))
+    )
+      throw new Error("Invalid FileDataID source");
+    if (origin === null && ids.matched !== 0)
+      throw new Error("Missing FileDataID source");
+    fileDataIdCoverage = {
+      matched: Number(ids.matched),
+      unmatched: Number(ids.unmatched),
+      ambiguous: Number(ids.ambiguous),
+      source: origin as Catalog["fileDataIdCoverage"]["source"],
+    };
+  }
   return {
     icons,
     groups,
     atlases,
     source: source as Catalog["source"],
     usageCoverage: coverage as Catalog["usageCoverage"],
+    fileDataIdCoverage,
   };
 }

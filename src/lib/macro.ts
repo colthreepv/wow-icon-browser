@@ -11,7 +11,13 @@ export function luaString(value: string): string {
 }
 export function makeMacroCommand(
   macroName: string,
-  texturePath: string,
+  icon: string | number,
 ): string {
-  return `/run EditMacro(${luaString(macroName)},${luaString(macroName)},${luaString(texturePath)})`;
+  if (
+    typeof icon === "number" &&
+    (!Number.isSafeInteger(icon) || icon <= 0 || icon > 0xffffffff)
+  )
+    throw new RangeError("FileDataID must be a positive uint32 integer");
+  const reference = typeof icon === "number" ? String(icon) : luaString(icon);
+  return `/run EditMacro(${luaString(macroName)},${luaString(macroName)},${reference})`;
 }

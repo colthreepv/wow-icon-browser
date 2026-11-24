@@ -10,7 +10,8 @@
     "import:catalog": "bun scripts/import-catalog.ts",
     "import:usage": "bun scripts/import-usage.ts",
     "benchmark:images": "bun scripts/benchmark-images.ts",
-    "test": "bun test tests/core.test.ts",
+    "test": "bun test tests/core.test.ts tests/filedataids.test.ts",
+    "import:filedataids": "bun scripts/import-filedataids.ts && bun scripts/merge-filedataids.ts",
     "test:browser": "playwright test"
   },
   "dependencies": {
