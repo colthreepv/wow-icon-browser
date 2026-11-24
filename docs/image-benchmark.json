@@ -1,0 +1,38 @@
+{
+  "sample": 256,
+  "sampleMethod": "Evenly spaced sorted source files",
+  "nativeSize": 56,
+  "quality": 78,
+  "individualWebPPsnrDb": 31.805493878311655,
+  "formats": [
+    {
+      "format": "Original JPG",
+      "files": 256,
+      "bytes": 467301,
+      "decodedRgbaBytes": 3211264,
+      "singleScatteredResultDecodeBytes": 12544
+    },
+    {
+      "format": "Individual WebP q78",
+      "files": 256,
+      "bytes": 317704,
+      "decodedRgbaBytes": 3211264,
+      "singleScatteredResultDecodeBytes": 12544
+    },
+    {
+      "format": "64-icon WebP atlas q78",
+      "files": 4,
+      "bytes": 272580,
+      "decodedRgbaBytes": 3211264,
+      "singleScatteredResultDecodeBytes": 802816
+    },
+    {
+      "format": "256-icon WebP atlas q78",
+      "files": 1,
+      "bytes": 272210,
+      "decodedRgbaBytes": 3211264,
+      "singleScatteredResultDecodeBytes": 3211264
+    }
+  ],
+  "decision": "64-icon atlases balance grouped browsing request count with less overfetch/decoded memory for scattered search and favorites than 256-icon atlases. Browser measurements reported separately."
+}
