@@ -21,6 +21,8 @@ Search the complete icon catalog, browse visually, select an icon, and copy an e
 ## Capabilities and Constraints
 
 - Original category/subcategory groups with counts, continuous virtualized grid and persistent adjustable icon size. Icon-first cells with an optional names view.
+- Browse categories form an expandable hierarchy. Small source folders can be combined into curated semantic themes, with original folder identities retained in metadata, source links and detail. The 24-icon threshold guides review rather than imposing automatic merges; classes and professions, including Mining, remain independent.
+- The desktop category sidebar resizes by pointer or keyboard, remembers its width and respects space needed by results. Mobile retains the nested category drawer.
 - Side detail on desktop, drawer on mobile. Filename, texture path, command preview, favorites, recents and shareable search/filter/selection URL.
 - All metadata searchable, no 1000-result ceiling. Normalize case, spaces and underscores; compact-word matching for eagle eye/eagleeye.
 - Enrich with verified item/spell usage names, searchable and attributed in repository documentation. Coverage must be honest.

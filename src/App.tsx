@@ -8,12 +8,12 @@ import {
   useState,
   type KeyboardEvent,
   type ButtonHTMLAttributes,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   Check,
-  ChevronDown,
   ChevronRight,
   Clock3,
   Copy,
@@ -36,6 +36,18 @@ import {
 } from "./lib/catalog";
 import { searchIcons } from "./lib/search";
 import { makeMacroCommand } from "./lib/macro";
+import {
+  ancestors,
+  countHierarchy,
+  createBrowseGroups,
+  withinGroup,
+} from "./lib/groups";
+import { CategoryTree } from "./components/CategoryTree";
+import {
+  DEFAULT_SIDEBAR_WIDTH,
+  MIN_SIDEBAR_WIDTH,
+  SidebarSplitter,
+} from "./components/SidebarSplitter";
 
 const format = (value: number) => value.toLocaleString("en-US");
 type Route = {
@@ -581,7 +593,49 @@ function Browser({ catalog }: { catalog: Catalog }) {
     favoritesPersistent &&
     recentsPersistent &&
     macroPersistent;
-  const [expanded, setExpanded] = useState<string[]>(["Classes"]);
+  const [expanded, setExpanded, expandedPersistent] = useStored(
+    "expandedCategories",
+    ["Classes"],
+    strings,
+  );
+  const [sidebarWidth, setSidebarWidth, sidebarPersistent] = useStored(
+    "sidebarWidth",
+    DEFAULT_SIDEBAR_WIDTH,
+    (value): value is number =>
+      typeof value === "number" &&
+      Number.isFinite(value) &&
+      value >= MIN_SIDEBAR_WIDTH &&
+      value <= 520,
+  );
+  const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
+  useEffect(() => {
+    const resize = () => setViewportWidth(window.innerWidth);
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+  const inspectorWidth =
+    viewportWidth >= 1600 ? 350 : viewportWidth <= 1250 ? 304 : 326;
+  const maxSidebarWidth = Math.max(
+    MIN_SIDEBAR_WIDTH,
+    Math.min(
+      520,
+      Math.floor(viewportWidth * 0.4),
+      viewportWidth - inspectorWidth - 388,
+    ),
+  );
+  const visibleSidebarWidth = Math.min(sidebarWidth, maxSidebarWidth);
+  const browse = useMemo(() => createBrowseGroups(catalog), [catalog]);
+  const browseGroupMap = useMemo(
+    () => new Map(browse.groups.map((group) => [group.id, group])),
+    [browse],
+  );
+  useEffect(() => {
+    const selectedPath =
+      (browse.paths.get(route.group) ?? route.group) || route.cat;
+    const branches = ancestors(selectedPath);
+    if (branches.length)
+      setExpanded((old) => [...new Set([...old, ...branches])]);
+  }, [route.group, route.cat, browse, setExpanded]);
   const input = useRef<HTMLInputElement>(null);
   const query = useDeferredValue(route.q);
   const favoriteSet = useMemo(() => new Set(favorites), [favorites]);
@@ -604,49 +658,44 @@ function Browser({ catalog }: { catalog: Catalog }) {
     () => new Map(catalog.groups.map((g) => [g.id, g])),
     [catalog],
   );
-  const counts = useMemo(() => {
-    const groups = new Map<string, number>();
-    const categories = new Map<string, number>();
-    for (const icon of scoped) {
-      const cats = new Set<string>();
-      for (const id of icon.groups) {
-        groups.set(id, (groups.get(id) ?? 0) + 1);
-        cats.add(groupMap.get(id)!.category);
-      }
-      for (const cat of cats)
-        categories.set(cat, (categories.get(cat) ?? 0) + 1);
-    }
-    return { groups, categories };
-  }, [scoped, groupMap]);
+  const counts = useMemo(
+    () => countHierarchy(scoped, browse.ancestry),
+    [scoped, browse],
+  );
   const filtered = useMemo(
     () =>
       scoped.filter((icon) =>
         icon.groups.some(
           (id) =>
             (!route.cat || groupMap.get(id)?.category === route.cat) &&
-            (!route.group || id === route.group),
+            (!route.group ||
+              withinGroup(id, route.group) ||
+              withinGroup(browse.paths.get(id)!, route.group)),
         ),
       ),
-    [scoped, route.cat, route.group, groupMap],
+    [scoped, route.cat, route.group, groupMap, browse],
   );
   const sections = useMemo(() => {
     const sections = new Map<string, Section>();
     for (const icon of filtered) {
-      const id = icon.groups.find(
+      const sourceId = icon.groups.find(
         (id) =>
           (!route.cat || groupMap.get(id)?.category === route.cat) &&
-          (!route.group || id === route.group),
+          (!route.group ||
+            withinGroup(id, route.group) ||
+            withinGroup(browse.paths.get(id)!, route.group)),
       )!;
+      const id = browse.paths.get(sourceId)!;
       let section = sections.get(id);
       if (!section) {
-        const g = groupMap.get(id)!;
+        const g = browseGroupMap.get(id)!;
         section = { id, label: g.label, category: g.category, icons: [] };
         sections.set(id, section);
       }
       section.icons.push(icon);
     }
     return [...sections.values()];
-  }, [filtered, groupMap, route.cat, route.group]);
+  }, [filtered, groupMap, route.cat, route.group, browse, browseGroupMap]);
   const selected = useMemo(
     () => catalog.icons.find((i) => i.name === route.icon) ?? null,
     [catalog, route.icon],
@@ -700,7 +749,6 @@ function Browser({ catalog }: { catalog: Catalog }) {
     update(patch);
     setFiltersOpen(false);
   }
-  const categories = [...new Set(catalog.groups.map((g) => g.category))];
   const rail = (
     <>
       <div className="rail-top">
@@ -743,67 +791,36 @@ function Browser({ catalog }: { catalog: Catalog }) {
         </button>
       </nav>
       <div className="rail-section-label">Categories</div>
+      <p className="browse-hint">Curated themes and original folders</p>
       <nav aria-label="Categories" className="categories">
-        {categories.map((cat) => (
-          <div key={cat} className="category-block">
-            <div className="category-line">
-              <button
-                className="expand-button"
-                aria-label={`${expanded.includes(cat) ? "Collapse" : "Expand"} ${cat}`}
-                aria-expanded={expanded.includes(cat)}
-                onClick={() =>
-                  setExpanded((old) =>
-                    old.includes(cat)
-                      ? old.filter((c) => c !== cat)
-                      : [...old, cat],
-                  )
-                }
-              >
-                {expanded.includes(cat) ? (
-                  <ChevronDown size={15} />
-                ) : (
-                  <ChevronRight size={15} />
-                )}
-              </button>
-              <button
-                className={`category-button ${route.cat === cat && !route.group ? "active" : ""}`}
-                onClick={() => {
-                  choose({ cat, group: "" });
-                  setExpanded((old) =>
-                    old.includes(cat) ? old : [...old, cat],
-                  );
-                }}
-              >
-                {cat}
-                <span>{format(counts.categories.get(cat) ?? 0)}</span>
-              </button>
-            </div>
-            {expanded.includes(cat) && (
-              <div className="subcategories">
-                {catalog.groups
-                  .filter((g) => g.category === cat)
-                  .map((g) => (
-                    <button
-                      key={g.id}
-                      title={g.id}
-                      className={`${route.group === g.id ? "active" : ""} ${(counts.groups.get(g.id) ?? 0) === 0 ? "zero-count" : ""}`}
-                      onClick={() => choose({ cat, group: g.id })}
-                    >
-                      <span>{g.label}</span>
-                      <span>{format(counts.groups.get(g.id) ?? 0)}</span>
-                    </button>
-                  ))}
-              </div>
-            )}
-          </div>
-        ))}
+        <CategoryTree
+          nodes={browse.tree}
+          counts={counts}
+          expanded={expanded}
+          selected={(browse.paths.get(route.group) ?? route.group) || route.cat}
+          onToggle={(id) =>
+            setExpanded((old) =>
+              old.includes(id)
+                ? old.filter((value) => value !== id)
+                : [...old, id],
+            )
+          }
+          onSelect={(node) => {
+            choose({
+              cat: node.category,
+              group: node.id === node.category ? "" : node.id,
+            });
+            if (node.children.length)
+              setExpanded((old) => [...new Set([...old, node.id])]);
+          }}
+        />
       </nav>
       <div className="rail-footer">
         <span>
           {format(catalog.source.uniqueIconCount)} icons, fully searchable.
         </span>
         <span>
-          {storageAvailable
+          {storageAvailable && expandedPersistent && sidebarPersistent
             ? "Favorites stay on this device."
             : "Browser storage unavailable. Preferences last for this visit."}
         </span>
@@ -860,6 +877,9 @@ function Browser({ catalog }: { catalog: Catalog }) {
         {!filtered.some((i) => i.id === selected.id) && (
           <p className="context-note">Outside your current results</p>
         )}
+        <p className="original-folder-label">
+          Original folder{selected.groups.length === 1 ? "" : "s"}
+        </p>
         <div className="category-tags">
           {selected.groups.map((id) => (
             <button
@@ -1011,8 +1031,24 @@ function Browser({ catalog }: { catalog: Catalog }) {
           </div>
           <span className="local-label">Local favorites. Entire catalog.</span>
         </header>
-        <div className="workspace">
-          <aside className="rail">{rail}</aside>
+        <div
+          className="workspace"
+          style={
+            { "--sidebar-width": `${visibleSidebarWidth}px` } as CSSProperties
+          }
+        >
+          <aside
+            className="rail"
+            id="category-sidebar"
+            aria-label="Category sidebar"
+          >
+            {rail}
+          </aside>
+          <SidebarSplitter
+            value={visibleSidebarWidth}
+            max={maxSidebarWidth}
+            onChange={setSidebarWidth}
+          />
           <main className="gallery">
             <div className="gallery-toolbar">
               <div className="results-summary">
@@ -1033,7 +1069,9 @@ function Browser({ catalog }: { catalog: Catalog }) {
                     onClick={() => update({ cat: "", group: "", view: "" })}
                   >
                     {route.group
-                      ? groupMap.get(route.group)?.label
+                      ? (browseGroupMap.get(route.group)?.label ??
+                        groupMap.get(route.group)?.label ??
+                        route.group.split("/").slice(1).join(" / "))
                       : route.cat || route.view}
                     <X size={12} />
                   </button>

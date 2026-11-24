@@ -17,13 +17,24 @@ independently. There is no separate landing page.
 
 ## Layout and behavior
 
-At 1920px the category rail is 230px and inspector 350px. At 1200px they become
-198px and 304px. Below 1000px the category rail becomes a drawer; below 760px
+The category rail defaults to 240px, can be resized from 200px to a viewport-safe
+maximum of 520px, and remembers the chosen width. Its focusable divider supports
+Left/Right (10px), Shift+Left/Right (40px), Home/End and pointer dragging;
+double-click resets the width. The inspector is 350px on a large desktop and
+304px at 1200px. Below 1000px the category rail becomes a drawer; below 760px
 the inspector is also a dialog drawer, with a close action, focus containment,
 Escape support and return focus.
 
-The gallery virtualizes group headers and icon rows together. Icon sizes are
-32/40/48/56/64/80px. Filename captions are optional. Counts reflect the current
+The gallery virtualizes group headers and icon rows together.
+The category sidebar is a recursively expandable hierarchy;
+each branch filters all its descendants with deduplicated counts. Curated themes
+consolidate related source folders in both the tree and gallery; the 24-icon
+review signal is not a hard rule, and Mining and other professions retain their
+identity. Original folders are explicitly labelled in the inspector and existing
+source-folder URLs continue to filter the exact original scope. Expansion state
+is stored locally and shared deep links reveal their selected ancestors.
+
+Icon sizes are 32/40/48/56/64/80px. Filename captions are optional. Counts reflect the current
 query and collection. An inspected icon may remain visible after filtering it
 out of the results, with an explicit context label.
 

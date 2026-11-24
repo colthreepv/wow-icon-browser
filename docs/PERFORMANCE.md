@@ -7,8 +7,8 @@ this document.
 
 ## Shipped assets
 
-- JavaScript: 285.51 KB raw, 89.20 KB gzip.
-- CSS: 15.69 KB raw, 4.17 KB gzip.
+- JavaScript after the semantic-navigation update: 311.27 KB raw, 93.90 KB gzip.
+- CSS after the navigation update: 16.10 KB raw, 4.30 KB gzip.
 - Complete metadata, including usage names: 1,760,951 bytes raw; the browser
   observed about 308 KB encoded over HTTP.
 - All 33,193 icon identities are searchable. 32,476 distinct source images are
@@ -18,13 +18,16 @@ this document.
 
 ## Actual initial viewport, 1920×1080
 
-| Measurement | 64-icon atlases | 256-icon atlases |
-| --- | ---: | ---: |
-| Mounted icon buttons | 211 | 211 |
-| Initial atlas requests | 4 | 1 |
-| Initial encoded image bytes | 290,616 | 290,184 |
-| Nominal decoded image bytes | 3,211,264 | 3,211,264 |
-| All initial resource encoded bytes | 694,662 | 690,133 |
+The following side-by-side delivery measurements were recorded before the
+semantic-navigation update, with the same catalog and image atlases.
+
+| Measurement                        | 64-icon atlases | 256-icon atlases |
+| ---------------------------------- | --------------: | ---------------: |
+| Mounted icon buttons               |             211 |              211 |
+| Initial atlas requests             |               4 |                1 |
+| Initial encoded image bytes        |         290,616 |          290,184 |
+| Nominal decoded image bytes        |       3,211,264 |        3,211,264 |
+| All initial resource encoded bytes |         694,662 |          690,133 |
 
 The 256 layout is the default because it gets the desktop's first screen with
 one request at essentially the same image payload. The equal decoded footprint
@@ -36,12 +39,12 @@ Initial gallery, Hunter category and keyboard navigation, 24 animation frames
 of 1500px scroll increments, then searches for eagle eye, fire, frost bolt,
 gem, inv, and sword:
 
-| Measurement | 64-icon atlases | 256-icon atlases |
-| --- | ---: | ---: |
-| Distinct requested atlases | 55 | 24 |
-| Cumulative image encoded bytes | 5,028,092 | 8,618,536 |
-| p95 observed frame interval | 18.1 ms | 17.8 ms |
-| Requested-image RGBA estimate | 44,154,880 | 76,668,928 |
+| Measurement                    | 64-icon atlases | 256-icon atlases |
+| ------------------------------ | --------------: | ---------------: |
+| Distinct requested atlases     |              55 |               24 |
+| Cumulative image encoded bytes |       5,028,092 |        8,618,536 |
+| p95 observed frame interval    |         18.1 ms |          17.8 ms |
+| Requested-image RGBA estimate  |      44,154,880 |       76,668,928 |
 
 This exposes the tradeoff: larger atlases make fewer requests, while sparse
 search fetches more unused pixels. The frame interval difference is too small

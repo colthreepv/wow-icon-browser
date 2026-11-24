@@ -10,7 +10,7 @@ OWN-WORLD: User-pinned dark neutral shell, warm off-white text, restrained pale 
 
 STORY: Find visually, inspect exact identity and verified usage, enter an existing macro name, copy the fully escaped command. Preview never implies Forever compatibility.
 
-FIRST VIEWPORT: Compact identity and search bar above three work areas: 210px category rail, flexible virtualized grouped grid, 310px inspector. Categories collapse before the grid is squeezed. Detail becomes a drawer on phones. The signature interaction is a precise selection outline linking the contact sheet to the persistent command preview.
+FIRST VIEWPORT: Compact identity and search bar above three work areas: resizable category rail (240px default), flexible virtualized grouped grid, docked inspector. Categories form a nested hierarchy with curated semantic groups; original source folders remain in details. Categories collapse before the grid is squeezed. Detail becomes a drawer on phones. The signature interaction is a precise selection outline linking the contact sheet to the persistent command preview.
 
 FORM: User-approved grouped dark gallery and docked inspector override direction seed 5e39b1fe. Code-first working app, no marketing hero.
 

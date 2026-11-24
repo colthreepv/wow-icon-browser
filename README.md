@@ -32,6 +32,11 @@ be cleared by removing this site's browser storage.
 - Searches **all 33,193 imported icon names**, not only loaded thumbnails.
 - Original category and subcategory groups, counts, continuous virtualized
   scrolling, adjustable icon size and optional filename labels.
+- Expandable category hierarchy and curated semantic themes, rather than long
+  lists of one-icon folders. Parent branches include their descendants. Original
+  folders remain visible in details and existing source-folder links still work.
+- Desktop sidebar resizes by dragging its right edge, with saved width. Focus
+  the divider for Left/Right, Shift+Left/Right or Home/End; double-click resets it.
 - Persistent favorites, recent selections, macro name and display preferences.
 - Shareable search, filters and selected icon through URL parameters.
 - Docked inspector on desktop and icon drawer on mobile.
@@ -40,6 +45,16 @@ be cleared by removing this site's browser storage.
 
 Keyboard: `/` focuses search, arrow keys navigate the grid, `Escape` closes the
 inspector. Controls expose visible focus, and copy actions report their result.
+
+Browse grouping is a curated UI enrichment, not official game data. The mapping
+tables in `src/data/semantic-*.json` consolidate related themes while preserving
+every original name and source association. The current 403 source folders yield
+137 browse groups. Fewer than 24 icons prompts review; it does not force a merge.
+Class and profession identities are protected: Mining remains standalone with
+its 15 icons. Larger related achievement folders also join the same theme so
+`Dungeons` and `Dungeons & raids` do not become overlapping sibling categories.
+
+![Nested categories and resized sidebar](docs/semantic-sidebar.png)
 
 The command deliberately passes the existing macro name twice:
 
